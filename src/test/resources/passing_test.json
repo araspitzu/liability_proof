@@ -1,10 +1,10 @@
 [
-  {"name": "Satoshi", "balance": 21},
-  {"name": "Clara", "balance": 80},
-  {"name": "Erik", "balance": 20},
-  {"name": "Luke", "balance": 65},
-  {"name": "Lucy", "balance": 30},
-  {"name": "Mike", "balance": 25},
-  {"name": "Alice", "balance": 38},
-  {"name": "Bob", "balance": 108}
+  {"user": "Satoshi", "balance": 21},
+  {"user": "Clara", "balance": 80},
+  {"user": "Erik", "balance": 20},
+  {"user": "Luke", "balance": 65},
+  {"user": "Lucy", "balance": 30},
+  {"user": "Mike", "balance": 25},
+  {"user": "Alice", "balance": 38},
+  {"user": "Bob", "balance": 108}
 ]

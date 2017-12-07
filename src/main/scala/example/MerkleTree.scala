@@ -6,11 +6,11 @@ import scala.math._
 object MerkleTree {
 
   case class Account(
-      name: String,
+      user: String,
       balance: Int
   ) extends Ordered[Account] {
     //lexicographical ordering
-    def compare(that: Account): Int = this.name.compareTo(that.name)
+    def compare(that: Account): Int = this.user.compareTo(that.user)
 
   }
 
@@ -108,7 +108,7 @@ object MerkleTree {
       sha256(leftHash ++ rightHash ++ s"$totalValue")
 
     def mkLeafId(account: Account): String =
-      sha256(account.name ++ s"${account.balance}")
+      sha256(account.user ++ s"${account.balance}")
 
   }
 
