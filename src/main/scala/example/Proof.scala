@@ -8,7 +8,7 @@ object Proof {
     path: Tree
   ) {
     def isValid(rootDigest: String, account: Account): Boolean = {
-      rootDigest == path.root.id && checkSubtreeProof(path.root, account)
+      rootDigest == path.rootDigest && checkSubtreeProof(path.root, account)
     }
   }
 

@@ -16,6 +16,12 @@ class ProofSpec extends FlatSpec with Matchers {
 
   val passingTestMock = resourceAsString("/passing_test.json")
   val accountsTestMock = resourceAsString("/accounts.json")
+  
+  private def checkTreeMetrics(tree: Tree, users: Seq[Account]) = {
+    
+    val expectedNumNodes = math.pow(2D, users.length).toInt - 1
+    val expectedMaxDepth = math.log(expectedNumNodes + 1) / math.log(2)
+  }
 
   it should "Construct a tree and a valid proof" in {
 
@@ -52,7 +58,7 @@ class ProofSpec extends FlatSpec with Matchers {
     val Some(proof) = tree.findProofByAccount(accountToCheck)
 
     tree.numNodes shouldBe expectedNumNodes
-    tree.root.totalValue shouldBe 37618
+    tree.totalBalance shouldBe 37618
     
     proof.isValid(rootDigest, accountToCheck) shouldBe true
 

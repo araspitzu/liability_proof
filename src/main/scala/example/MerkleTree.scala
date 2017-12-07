@@ -17,7 +17,7 @@ object MerkleTree {
   }
 
   case class Tree(
-      root: Node
+      private[example] val root: Node
   ) {
 
     def rootDigest = root.id
