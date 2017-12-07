@@ -74,11 +74,11 @@ object MerkleTree {
       // Hash of the concatenation of child hashes + total balance
       id: String,
       // The combined value of the subtrees, or account value if this node is a leaf
-      totalValue: Int,
+      totalValue: Double,
       // The value of the subtree on the left
-      leftValue: Int = 0,
+      leftValue: Double = 0,
       // The value of the subtree on the right
-      rightValue: Int = 0,
+      rightValue: Double = 0,
       // Hash pointer to left child ID's
       leftHash: Option[String] = None,
       // Hash pointer to left child ID's
@@ -104,11 +104,12 @@ object MerkleTree {
     def mkId(left: Node, right: Node): String =
       mkIdHash(left.id, right.id, left.totalValue + right.totalValue)
 
-    def mkIdHash(leftHash: String, rightHash: String, totalValue: Int): String =
-      sha256(leftHash ++ rightHash ++ s"$totalValue")
+    //TODO add random nonce
+    def mkIdHash(leftHash: String, rightHash: String, totalValue: Double): String =
+      sha256(s"$leftHash | $rightHash | $totalValue")
 
     def mkLeafId(account: Account): String =
-      sha256(account.user ++ s"${account.balance}")
+      sha256(s"${account.user} | ${account.balance}")
 
   }
 
