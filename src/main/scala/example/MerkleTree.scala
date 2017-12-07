@@ -1,6 +1,8 @@
 package example
 
 import java.security.MessageDigest
+import example.Proof.ProofOfLiability
+
 import scala.math._
 
 object MerkleTree {
@@ -18,12 +20,16 @@ object MerkleTree {
       root: Node
   ) {
 
+    def rootDigest = root.id
+    
     def totalBalance = root.totalValue
-
-    def findProofByAccount(account: Account): Option[Tree] = {
-      mkProofPath(root, account) map (Tree(_))
+  
+    def hasProofFor(account: Account): Boolean = findProofByAccount(account).isDefined
+    
+    def findProofByAccount(account: Account): Option[ProofOfLiability] = {
+      mkProofPath(root, account).map(node => ProofOfLiability(Tree(node)))
     }
-
+    
     private def mkProofPath(node: Node, account: Account): Option[Node] = {
       if (node.isLeaf && node.id == Node.mkLeafId(account)) {
         return Some(node.copy())

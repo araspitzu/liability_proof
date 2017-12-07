@@ -6,14 +6,10 @@ object Proof {
 
   case class ProofOfLiability(
     path: Tree
-  )
-
-  object ProofOfLiability {
-
-    def isValid(rootDigest: String, proof: ProofOfLiability, account: Account): Boolean = {
-      rootDigest == proof.path.root.id && checkSubtreeProof(proof.path.root, account)
+  ) {
+    def isValid(rootDigest: String, account: Account): Boolean = {
+      rootDigest == path.root.id && checkSubtreeProof(path.root, account)
     }
-
   }
 
   def checkNodeId(node: Node): Boolean = {
