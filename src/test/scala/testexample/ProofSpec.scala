@@ -9,9 +9,12 @@ import org.json4s.jackson.JsonMethods._
 
 class ProofSpec extends FlatSpec with Matchers {
   
+  def resourceAsString(fileName: String) = Source.fromURL(getClass.getResource(fileName)).mkString
+  
   implicit val formats = DefaultFormats
   
-  val passingTestMock = Source.fromURL(getClass.getResource("/passing_test.json")).mkString
+  val passingTestMock = resourceAsString("/passing_test.json")
+  val accountsTestMock = resourceAsString("/accounts.json")
   
   it should "Construct a tree and a valid proof" in {
     
@@ -39,7 +42,32 @@ class ProofSpec extends FlatSpec with Matchers {
     ProofOfLiability.isValid(rootDigest, proof, existingAccountToCheck) shouldBe true
       
   }
+  
+  it should "validate the proof from external mock data account.json" in {
+    val users = parse(accountsTestMock).extract[List[Account]]
     
+    val expectedNumNodes = 33
+    
+    val tree = Tree(users)
+    val rootDigest = tree.root.id
+    
+    val accountToCheck = Account("mark", 462)
+    val proofRoot = tree.findProofByAccount(accountToCheck)
+    
+    
+    tree.numNodes shouldBe 33
+    tree.root.totalValue shouldBe 37618
+    
+    proofRoot.isDefined shouldBe true
+    
+    val proof = ProofOfLiability(proofRoot.get)
+    ProofOfLiability.isValid(rootDigest, proof, accountToCheck) shouldBe true
+    
+    //Also othe validation should fail if the account name  or balance is incorrect
+    ProofOfLiability.isValid(rootDigest, proof, Account("mark", 666)) shouldBe false
+    ProofOfLiability.isValid(rootDigest, proof, Account("markzz", 462)) shouldBe false
+    
+  }
   
 
 }
