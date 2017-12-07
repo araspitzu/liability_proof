@@ -53,7 +53,7 @@ class ProofSpec extends FlatSpec with Matchers {
     val accountToCheck = Account("mark", 462)
     val proofRoot = tree.findProofByAccount(accountToCheck)
 
-    tree.numNodes shouldBe 33
+    tree.numNodes shouldBe expectedNumNodes
     tree.root.totalValue shouldBe 37618
 
     proofRoot.isDefined shouldBe true
