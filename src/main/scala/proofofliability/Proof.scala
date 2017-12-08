@@ -1,11 +1,11 @@
-package example
+package proofofliability
 
-import example.MerkleTree._
+import proofofliability.MerkleTree._
 
 object Proof {
 
   case class ProofOfLiability(
-    path: Tree
+      path: Tree
   ) {
     def isValid(rootDigest: String, account: Account): Boolean = {
       rootDigest == path.rootDigest && checkSubtreeProof(path.root, account)
@@ -13,13 +13,10 @@ object Proof {
   }
 
   def checkNodeId(node: Node): Boolean = {
-    if (!node.isLeaf)
-      node.id == Node.mkIdHash(node.leftHash.get, node.rightHash.get, node.totalValue)
-    else
-      false
+    !node.isLeaf && node.id == Node.mkIdHash(node.leftHash.get, node.rightHash.get, node.totalValue)
   }
 
-  //TODO check for non decreasing node values
+  //TODO check for non decreasing node values ?
   private def checkSubtreeProof(node: Node, account: Account): Boolean = {
 
     if (node.isLeaf)

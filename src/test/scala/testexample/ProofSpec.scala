@@ -1,12 +1,14 @@
 package testexample
 
 import scala.io.Source
-import example.MerkleTree.{ Account, Tree }
-import example.MerkleTree._
-import example.Proof.{ ProofOfLiability }
+import proofofliability.MerkleTree.{Account, Tree}
+import proofofliability.MerkleTree._
 import org.scalatest._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+
+import scala.math.pow
+import scala.util.Random
 
 class ProofSpec extends FlatSpec with Matchers {
 
@@ -14,35 +16,49 @@ class ProofSpec extends FlatSpec with Matchers {
 
   implicit val formats = DefaultFormats
 
-  val passingTestMock = resourceAsString("/passing_test.json")
-  val accountsTestMock = resourceAsString("/accounts.json")
+  lazy val passingTestMock = resourceAsString("/mock_data.json")
+  lazy val accountsTestMock = resourceAsString("/accounts.json")
+  lazy val randomAccounts:Stream[Account] = Account(
+    user = Random.alphanumeric.take(6).mkString,
+    balance = Random.nextInt
+  ) #:: randomAccounts
+  
   
   private def checkTreeMetrics(tree: Tree, users: Seq[Account]) = {
     
-    val expectedNumNodes = math.pow(2D, users.length).toInt - 1
-    val expectedMaxDepth = math.log(expectedNumNodes + 1) / math.log(2)
+    val expectedTotalBalance = users.map(_.balance).sum
+    //TODO add commentary
+    val expectedNumNodes = {
+      val closestBiggerPowOfTwo = (1 to 32 takeWhile (pow(2, _) < users.size)).last + 1
+      val rest = pow(2, closestBiggerPowOfTwo) - users.size
+      (0 to closestBiggerPowOfTwo).map(pow(2,_)).sum - (2 * rest)
+    }
+    val expectedMaxDepth = math.log(expectedNumNodes) / math.log(2)
+
+
+    tree.totalBalance shouldBe expectedTotalBalance
+    tree.maxDepth shouldBe (expectedMaxDepth.toInt +- 1)
+    tree.numNodes shouldBe expectedNumNodes
+  
   }
 
   it should "Construct a tree and a valid proof" in {
 
     val users = parse(passingTestMock).extract[Seq[Account]]
-
-    val expectedNumNodes = 15 //math.pow(2D, users.length).toInt - 1
-    val expectedMaxDepth = 4 //math.log(expectedNumNodes + 1) / math.log(2)
-
+    
     val tree = Tree(users)
     val rootDigest = tree.rootDigest
 
-    tree.numNodes shouldBe expectedNumNodes
-    tree.maxDepth shouldBe expectedMaxDepth
+    tree.numNodes shouldBe 15
+    tree.maxDepth shouldBe 4
+    tree.totalBalance shouldBe 387
 
-    val existingAccountToCheck = Account("Alice", 38)
-    val nonExistingAccountToCheck = Account("Mallory", 31)
-    val Some(accountProof) = tree.findProofByAccount(existingAccountToCheck)
+    val existingAccount= Account("Alice", 38)
+    val nonExistingAccount = Account("Mallory", 31)
+    val Some(proof) = tree.findProofByAccount(existingAccount)
 
-    tree.findProofByAccount(nonExistingAccountToCheck) shouldBe None
-    
-    accountProof.isValid(rootDigest, existingAccountToCheck) shouldBe true
+    tree.findProofByAccount(nonExistingAccount) shouldBe None
+    proof.isValid(rootDigest, existingAccount) shouldBe true
 
   }
 
@@ -86,5 +102,25 @@ class ProofSpec extends FlatSpec with Matchers {
     proof.isValid(wrongDigest, Account("Bob", 108)) shouldBe false
     
   }
-
+  
+  it should "be a balanced tree" in {
+    
+    //with power of two
+    val eightUsers = randomAccounts.take(8).toList
+    checkTreeMetrics(Tree(eightUsers), eightUsers)
+  
+    //with power of two - 1
+    val fourteen = randomAccounts.take(14).toList
+    checkTreeMetrics(Tree(fourteen), fourteen)
+    
+    //with power of two + 1
+    val seventeen = randomAccounts.take(17).toList
+    checkTreeMetrics(Tree(seventeen), seventeen)
+    
+    //with a lot of users
+    val manyUsers = randomAccounts.take(8712).toList
+    checkTreeMetrics(Tree(manyUsers), manyUsers)
+    
+  }
+  
 }

@@ -1,7 +1,7 @@
-package example
+package proofofliability
 
 import java.security.MessageDigest
-import example.Proof.ProofOfLiability
+import proofofliability.Proof.ProofOfLiability
 
 import scala.math._
 
@@ -9,7 +9,7 @@ object MerkleTree {
 
   case class Account(
       user: String,
-      balance: Int
+      balance: Double
   ) extends Ordered[Account] {
     //lexicographical ordering
     def compare(that: Account): Int = this.user.compareTo(that.user)
@@ -17,19 +17,19 @@ object MerkleTree {
   }
 
   case class Tree(
-      private[example] val root: Node
+      private[proofofliability] val root: Node
   ) {
 
     def rootDigest = root.id
-    
+
     def totalBalance = root.totalValue
-  
+
     def hasProofFor(account: Account): Boolean = findProofByAccount(account).isDefined
-    
+
     def findProofByAccount(account: Account): Option[ProofOfLiability] = {
       mkProofPath(root, account).map(node => ProofOfLiability(Tree(node)))
     }
-    
+
     private def mkProofPath(node: Node, account: Account): Option[Node] = {
       if (node.isLeaf && node.id == Node.mkLeafId(account)) {
         return Some(node.copy())
