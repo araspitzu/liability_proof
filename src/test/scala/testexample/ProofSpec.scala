@@ -18,16 +18,21 @@ class ProofSpec extends FlatSpec with Matchers {
 
   lazy val passingTestMock = resourceAsString("/mock_data.json")
   lazy val accountsTestMock = resourceAsString("/accounts.json")
+  
   lazy val randomAccounts:Stream[Account] = Account(
     user = Random.alphanumeric.take(6).mkString,
     balance = Random.nextInt
   ) #:: randomAccounts
   
-  
+  /**
+    *  The merkle tree we build should always be balanced and contain the account data on the leaves,
+    *  we can compute the number of nodes by getting the biggest-closest power
+    *  of 2 to the number of accounts, then if the number is not a perfect square we subtract the rest.
+    *  If the tree is balanced its max depth should be at most log2(numNodes)
+    */
   private def checkTreeMetrics(tree: Tree, users: Seq[Account]) = {
     
     val expectedTotalBalance = users.map(_.balance).sum
-    //TODO add commentary
     val expectedNumNodes = {
       val closestBiggerPowOfTwo = (1 to 32 takeWhile (pow(2, _) < users.size)).last + 1
       val rest = pow(2, closestBiggerPowOfTwo) - users.size
