@@ -2,7 +2,6 @@ package proofofliability
 
 import java.security.MessageDigest
 import proofofliability.Proof.ProofOfLiability
-
 import scala.math._
 
 object MerkleTree {
@@ -123,32 +122,29 @@ object MerkleTree {
 
   def sha256(msg: String): String = {
     md.update(msg.getBytes)
-    md.digest().map("%02x".format(_)).mkString
+    md.digest.map("%02x".format(_)).mkString
   }
 
-  private def mkTree(accounts: Seq[Account]): Node = {
-    accounts match {
-      //Leaf
-      case singleton :: Nil => Node(
-        id = Node.mkLeafId(singleton),
-        totalValue = singleton.balance
+  private def mkTree(accounts: Seq[Account]): Node = accounts match {
+    //Leaf
+    case singleton :: Nil => Node(
+      id = Node.mkLeafId(singleton),
+      totalValue = singleton.balance
+    )
+    //Node
+    case moreThanOne =>
+      val leftChild = mkTree(accounts.take(accounts.length / 2))
+      val rightChild = mkTree(accounts.drop(accounts.length / 2))
+      Node(
+        id = Node.mkId(leftChild, rightChild),
+        totalValue = leftChild.totalValue + rightChild.totalValue,
+        leftValue = leftChild.totalValue,
+        rightValue = rightChild.totalValue,
+        leftHash = Some(leftChild.id),
+        rightHash = Some(rightChild.id),
+        left = Some(leftChild),
+        right = Some(rightChild)
       )
-      //Node
-      case moreThanOne =>
-        val leftChild = mkTree(accounts.take(accounts.length / 2))
-        val rightChild = mkTree(accounts.drop(accounts.length / 2))
-        Node(
-          id = Node.mkId(leftChild, rightChild),
-          totalValue = leftChild.totalValue + rightChild.totalValue,
-          leftValue = leftChild.totalValue,
-          rightValue = rightChild.totalValue,
-          leftHash = Some(leftChild.id),
-          rightHash = Some(rightChild.id),
-          left = Some(leftChild),
-          right = Some(rightChild)
-        )
-    }
-
   }
 
 }
