@@ -1,22 +1,13 @@
 package proofofliability
 
-import java.security.MessageDigest
+import Util._
 import proofofliability.Proof.ProofOfLiability
-import scala.math._
 
 object MerkleTree {
 
-  case class Account(
-      user: String,
-      balance: Double
-  ) extends Ordered[Account] {
-    //lexicographical ordering
-    def compare(that: Account): Int = this.user.compareTo(that.user)
-
-  }
-
   case class Tree(
-      private[proofofliability] val root: Node
+      private[proofofliability] val root: Node,
+      private[proofofliability] val accountToLeaves: Map[Account, Seq[Node]]
   ) {
 
     def rootDigest = root.id
@@ -26,21 +17,23 @@ object MerkleTree {
     def hasProofFor(account: Account): Boolean = findProofByAccount(account).isDefined
 
     def findProofByAccount(account: Account): Option[ProofOfLiability] = {
-      mkProofPath(root, account).map(node => ProofOfLiability(Tree(node)))
+      accountToLeaves.get(account).map { nodes =>
+        ProofOfLiability(nodes.map(_.index.get).map(mkProofPath(root, _)).flatten)
+      }
     }
 
-    private def mkProofPath(node: Node, account: Account): Option[Node] = {
-      if (node.isLeaf && node.id == Node.mkLeafId(account)) {
+    private def mkProofPath(node: Node, index: Double): Option[Node] = {
+      if (node.isLeaf && node.index == Some(index)) {
         return Some(node.copy())
       }
 
       if (!node.isLeaf) {
-        val leftBranch = mkProofPath(node.left.get, account)
+        val leftBranch = mkProofPath(node.left.get, index)
 
         if (leftBranch.isDefined)
           return Some(node.copy(left = leftBranch, right = None))
 
-        val rightBranch = mkProofPath(node.right.get, account)
+        val rightBranch = mkProofPath(node.right.get, index)
 
         if (rightBranch.isDefined)
           return Some(node.copy(left = None, right = rightBranch))
@@ -68,14 +61,79 @@ object MerkleTree {
       case Some(node) if !node.isLeaf => math.max(maxDepthNode(node.left), maxDepthNode(node.right)) + 1
     }
 
+    def numLeaves: Int = leavesCountNode(Some(root))
+
+    private def leavesCountNode(node: Option[Node]): Int = node match {
+      case None                 => 0
+      case Some(n) if n.isLeaf  => 1
+      case Some(n) if !n.isLeaf => leavesCountNode(n.left) + leavesCountNode(n.right)
+    }
+
+    def leavesBalances: Double = leavesBalancesNode(Some(root))
+
+    private def leavesBalancesNode(someNode: Option[Node]): Double = someNode match {
+      case None                       => 0
+      case Some(node) if node.isLeaf  => node.totalValue
+      case Some(node) if !node.isLeaf => leavesBalancesNode(node.left) + leavesBalancesNode(node.right)
+    }
+
   }
 
   object Tree {
-    //TODO scramble account ordering?
-    def apply(accounts: Seq[Account]): Tree = Tree(mkTree(accounts.sorted))
+
+    val BALANCE_THRESHOLD = 20
+    val BALANCE_SPLIT_SIZE = 3
+
+    def apply(accounts: Seq[Account]): Tree = {
+      val accountToLeaves = scrambleAccounts(accounts)
+      val randomizedLeaves = accountToLeaves.values.flatten.toSeq.sortBy(_.index)
+      
+//      for( acc <- accountToLeaves.keys ) {
+//        val accLeaves = accountToLeaves.getOrElse(acc, Seq.empty)
+//        println(s"Account: ${acc.user}, ${acc.balance}  have leaves total value of :${accLeaves.map(_.totalValue).sum}")
+//      }
+      
+      val rootNode = mkTree(randomizedLeaves)
+
+      Tree(rootNode, accountToLeaves)
+    }
+
+    private def scrambleAccounts(input: Seq[Account]): Map[Account, Seq[Node]] = {
+      input.map( acc => acc -> splitBySize(acc, BALANCE_SPLIT_SIZE) ).toMap
+    }
+
+    private def splitUserHashByByte(sha256Hash: String, size: Int): Seq[String] = {
+        hexToBytes(sha256Hash).grouped( (32 / size) + (32 % size) ).map(bytesToHex).toSeq
+    }
+
+    private[proofofliability] def splitBySize(account: Account, size: Int): Seq[Node] = {
+      splitUserHashByByte(Node.mkLeafId(account), size).map { partialHash =>
+        Node.mkLeaf(Account(partialHash, account.balance / size))
+      }
+    }
+
+    private def mkTree(inputLeaves: Seq[Node]): Node = inputLeaves match {
+      //Leaf
+      case singleton :: Nil => singleton
+      //Node
+      case moreThanOne =>
+        val leftChild = mkTree(inputLeaves.take(inputLeaves.length / 2))
+        val rightChild = mkTree(inputLeaves.drop(inputLeaves.length / 2))
+        Node(
+          id = Node.mkId(leftChild, rightChild),
+          totalValue = leftChild.totalValue + rightChild.totalValue,
+          leftValue = leftChild.totalValue,
+          rightValue = rightChild.totalValue,
+          leftHash = Some(leftChild.id),
+          rightHash = Some(rightChild.id),
+          left = Some(leftChild),
+          right = Some(rightChild)
+        )
+    }
+
   }
 
-  case class Node(
+  private[proofofliability] case class Node(
       // Hash of the concatenation of child hashes + total balance
       id: String,
       // The combined value of the subtrees, or account value if this node is a leaf
@@ -91,7 +149,9 @@ object MerkleTree {
       // left child
       left: Option[Node] = None,
       // right child
-      right: Option[Node] = None
+      right: Option[Node] = None,
+      //
+      index: Option[Double] = None
   ) {
 
     def isLeaf = left.isEmpty && right.isEmpty
@@ -116,35 +176,12 @@ object MerkleTree {
     def mkLeafId(account: Account): String =
       sha256(s"${account.user} | ${account.balance}")
 
-  }
-
-  lazy val md = MessageDigest.getInstance("SHA-256")
-
-  def sha256(msg: String): String = {
-    md.update(msg.getBytes)
-    md.digest.map("%02x".format(_)).mkString
-  }
-
-  private def mkTree(accounts: Seq[Account]): Node = accounts match {
-    //Leaf
-    case singleton :: Nil => Node(
-      id = Node.mkLeafId(singleton),
-      totalValue = singleton.balance
+    def mkLeaf(account: Account) = Node(
+      id = mkLeafId(account),
+      totalValue = account.balance,
+      index = Some(math.random)
     )
-    //Node
-    case moreThanOne =>
-      val leftChild = mkTree(accounts.take(accounts.length / 2))
-      val rightChild = mkTree(accounts.drop(accounts.length / 2))
-      Node(
-        id = Node.mkId(leftChild, rightChild),
-        totalValue = leftChild.totalValue + rightChild.totalValue,
-        leftValue = leftChild.totalValue,
-        rightValue = rightChild.totalValue,
-        leftHash = Some(leftChild.id),
-        rightHash = Some(rightChild.id),
-        left = Some(leftChild),
-        right = Some(rightChild)
-      )
+
   }
 
 }

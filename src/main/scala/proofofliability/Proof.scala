@@ -5,10 +5,13 @@ import proofofliability.MerkleTree._
 object Proof {
 
   case class ProofOfLiability(
-      path: Tree
+      partialProofs: Seq[Node]
   ) {
     def isValid(rootDigest: String, account: Account): Boolean = {
-      rootDigest == path.rootDigest && checkSubtreeProof(path.root, account)
+      val partialAccounts = Tree.splitBySize(account, 1)
+      partialProofs.map { proofRoot =>
+        rootDigest == proofRoot.id && checkSubtreeProof(proofRoot, partialAccounts)
+      }.reduce(_ && _)
     }
   }
 
@@ -17,16 +20,16 @@ object Proof {
   }
 
   //TODO check for non decreasing node values ?
-  private def checkSubtreeProof(node: Node, account: Account): Boolean = {
+  private def checkSubtreeProof(node: Node, partialAccLeaf: Seq[Node]): Boolean = {
 
     if (node.isLeaf)
-      return node.id == Node.mkLeafId(account)
+      return partialAccLeaf.exists(leaf => node.id == leaf.id)
 
     if (node.right.isDefined)
-      return checkNodeId(node) && checkSubtreeProof(node.right.get, account)
+      return checkNodeId(node) && checkSubtreeProof(node.right.get, partialAccLeaf)
 
     if (node.left.isDefined)
-      return checkNodeId(node) && checkSubtreeProof(node.left.get, account)
+      return checkNodeId(node) && checkSubtreeProof(node.left.get, partialAccLeaf)
 
     false
   }
