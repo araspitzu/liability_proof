@@ -1,14 +1,16 @@
 package proofofliability
 
 import proofofliability.MerkleTree._
+import proofofliability.Util.SplitStrategy
 
 object Proof {
 
   case class ProofOfLiability(
-      partialProofs: Seq[Node]
+      partialProofs: Seq[Node],
+      strategy: SplitStrategy
   ) {
     def isValid(rootDigest: String, account: Account): Boolean = {
-      val partialAccounts = Tree.splitBySize(account, 1)
+      val partialAccounts = strategy.split(account)
       partialProofs.map { proofRoot =>
         rootDigest == proofRoot.id && checkSubtreeProof(proofRoot, partialAccounts)
       }.reduce(_ && _)
@@ -22,15 +24,17 @@ object Proof {
   //TODO check for non decreasing node values ?
   private def checkSubtreeProof(node: Node, partialAccLeaf: Seq[Node]): Boolean = {
 
-    if (node.isLeaf)
+    if (node.isLeaf) {
+      //FIXME inefficient
       return partialAccLeaf.exists(leaf => node.id == leaf.id)
-
-    if (node.right.isDefined)
-      return checkNodeId(node) && checkSubtreeProof(node.right.get, partialAccLeaf)
+    }
 
     if (node.left.isDefined)
       return checkNodeId(node) && checkSubtreeProof(node.left.get, partialAccLeaf)
-
+  
+    if (node.right.isDefined)
+      return checkNodeId(node) && checkSubtreeProof(node.right.get, partialAccLeaf)
+  
     false
   }
 

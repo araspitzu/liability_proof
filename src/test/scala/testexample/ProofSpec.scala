@@ -52,7 +52,7 @@ class ProofSpec extends FlatSpec with Matchers {
 
     val users = parse(passingTestMock).extract[Seq[Account]]
 
-    val tree = Tree(users)
+    val tree = Tree.fromStrategy(users, SplitBySize(3))
     val rootDigest = tree.rootDigest
 
  //   tree.numNodes shouldBe 15
@@ -73,7 +73,7 @@ class ProofSpec extends FlatSpec with Matchers {
 
     val expectedNumNodes = 33
 
-    val tree = Tree(users)
+    val tree = Tree.fromStrategy(users, SplitBySize(3))
     val rootDigest = tree.rootDigest
 
     val accountToCheck = Account("mark", 462)
@@ -92,17 +92,17 @@ class ProofSpec extends FlatSpec with Matchers {
 
   it should "not find a proof if the tree does not contain a certain user" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
-    val tree = Tree(users)
+    val tree = Tree.fromStrategy(users, SplitBySize(3))
     tree.hasProofFor(Account("nope", 12)) shouldBe false
   }
 
   it should "validate a proof correctly (failing) given a wrong root digest" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
-    val tree = Tree(users)
+    val tree = Tree.fromStrategy(users, SplitBySize(3))
     val Some(proof) = tree.findProofByAccount(Account("Bob", 108))
 
     val correctRootDigest = tree.rootDigest
-    val wrongDigest = sha256("Yo")
+    val wrongDigest = sha256Hex("Yo")
 
     proof.isValid(correctRootDigest, Account("Bob", 108)) shouldBe true
     proof.isValid(wrongDigest, Account("Bob", 108)) shouldBe false
@@ -113,19 +113,19 @@ class ProofSpec extends FlatSpec with Matchers {
 
     //with an exact power of two
     val eightUsers = randomAccounts.take(8).toList
-    checkTreeMetrics(Tree(eightUsers), eightUsers)
+    checkTreeMetrics(Tree.fromStrategy(eightUsers, SplitBySize(3)), eightUsers)
 
     //with power of two - 1
     val fourteen = randomAccounts.take(14).toList
-    checkTreeMetrics(Tree(fourteen), fourteen)
+    checkTreeMetrics(Tree.fromStrategy(fourteen, SplitBySize(3)), fourteen)
 
     //with power of two + 1
     val seventeen = randomAccounts.take(17).toList
-    checkTreeMetrics(Tree(seventeen), seventeen)
+    checkTreeMetrics(Tree.fromStrategy(seventeen, SplitBySize(3)), seventeen)
 
     //with a lot of users
     val manyUsers = randomAccounts.take(8712).toList
-    checkTreeMetrics(Tree(manyUsers), manyUsers)
+    checkTreeMetrics(Tree.fromStrategy(manyUsers, SplitBySize(3)), manyUsers)
 
   }
 

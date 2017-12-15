@@ -7,7 +7,8 @@ object MerkleTree {
 
   case class Tree(
       private[proofofliability] val root: Node,
-      private[proofofliability] val accountToLeaves: Map[Account, Seq[Node]]
+      private[proofofliability] val accountToLeaves: Map[Account, Seq[Node]],
+      private val splitStrategy: SplitStrategy
   ) {
 
     def rootDigest = root.id
@@ -18,12 +19,13 @@ object MerkleTree {
 
     def findProofByAccount(account: Account): Option[ProofOfLiability] = {
       accountToLeaves.get(account).map { nodes =>
-        ProofOfLiability(nodes.map(_.index.get).map(mkProofPath(root, _)).flatten)
+        val partialProofs = nodes.map(_.rndIndex.get).map(mkProofPath(root, _)).flatten
+        ProofOfLiability(partialProofs,splitStrategy)
       }
     }
 
     private def mkProofPath(node: Node, index: Double): Option[Node] = {
-      if (node.isLeaf && node.index == Some(index)) {
+      if (node.isLeaf && node.rndIndex == Some(index)) {
         return Some(node.copy())
       }
 
@@ -80,36 +82,17 @@ object MerkleTree {
   }
 
   object Tree {
-
-    val BALANCE_THRESHOLD = 20
-    val BALANCE_SPLIT_SIZE = 3
-
-    def apply(accounts: Seq[Account]): Tree = {
-      val accountToLeaves = scrambleAccounts(accounts)
-      val randomizedLeaves = accountToLeaves.values.flatten.toSeq.sortBy(_.index)
-      
-//      for( acc <- accountToLeaves.keys ) {
-//        val accLeaves = accountToLeaves.getOrElse(acc, Seq.empty)
-//        println(s"Account: ${acc.user}, ${acc.balance}  have leaves total value of :${accLeaves.map(_.totalValue).sum}")
-//      }
-      
+    
+    def fromStrategy[T <: SplitStrategy](accounts: Seq[Account], strategy: T): Tree = {
+      val accountToLeaves = scrambleAccounts(accounts, strategy)
+      val randomizedLeaves = accountToLeaves.values.flatten.toSeq.sortBy(_.rndIndex)
       val rootNode = mkTree(randomizedLeaves)
-
-      Tree(rootNode, accountToLeaves)
+  
+      Tree(rootNode, accountToLeaves, strategy)
     }
-
-    private def scrambleAccounts(input: Seq[Account]): Map[Account, Seq[Node]] = {
-      input.map( acc => acc -> splitBySize(acc, BALANCE_SPLIT_SIZE) ).toMap
-    }
-
-    private def splitUserHashByByte(sha256Hash: String, size: Int): Seq[String] = {
-        hexToBytes(sha256Hash).grouped( (32 / size) + (32 % size) ).map(bytesToHex).toSeq
-    }
-
-    private[proofofliability] def splitBySize(account: Account, size: Int): Seq[Node] = {
-      splitUserHashByByte(Node.mkLeafId(account), size).map { partialHash =>
-        Node.mkLeaf(Account(partialHash, account.balance / size))
-      }
+  
+    private def scrambleAccounts[T <: SplitStrategy](input: Seq[Account], strategy: T): Map[Account, Seq[MerkleTree.Node]] = {
+      input.map(acc => acc -> strategy.split(acc)).toMap
     }
 
     private def mkTree(inputLeaves: Seq[Node]): Node = inputLeaves match {
@@ -151,7 +134,7 @@ object MerkleTree {
       // right child
       right: Option[Node] = None,
       //
-      index: Option[Double] = None
+      rndIndex: Option[Double] = None
   ) {
 
     def isLeaf = left.isEmpty && right.isEmpty
@@ -171,15 +154,15 @@ object MerkleTree {
 
     //TODO add random nonce
     def mkIdHash(leftHash: String, rightHash: String, totalValue: Double): String =
-      sha256(s"$leftHash | $rightHash | $totalValue")
+      sha256Hex(s"$leftHash | $rightHash | $totalValue")
 
-    def mkLeafId(account: Account): String =
-      sha256(s"${account.user} | ${account.balance}")
+    private[proofofliability] def mkLeafId(account: Account): String =
+      sha256Hex(s"${account.user} | ${account.balance}")
 
     def mkLeaf(account: Account) = Node(
       id = mkLeafId(account),
       totalValue = account.balance,
-      index = Some(math.random)
+      rndIndex = Some(math.random)
     )
 
   }
