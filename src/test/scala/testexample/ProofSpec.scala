@@ -1,20 +1,21 @@
 package testexample
 
 import scala.io.Source
-import proofofliability.MerkleTree.{ Account, Tree }
+import proofofliability.MerkleTree.{Account, Tree}
 import proofofliability.MerkleTree._
 import org.scalatest._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-
-import scala.math.pow
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization._
+import proofofliability.Proof
 import scala.util.Random
 
 class ProofSpec extends FlatSpec with Matchers {
 
   def resourceAsString(fileName: String) = Source.fromURL(getClass.getResource(fileName)).mkString
 
-  implicit val formats = DefaultFormats
+  implicit val formats = Serialization.formats(NoTypeHints)
 
   lazy val passingTestMock = resourceAsString("/mock_data.json")
   lazy val accountsTestMock = resourceAsString("/accounts.json")
@@ -102,6 +103,19 @@ class ProofSpec extends FlatSpec with Matchers {
     proof.isValid(correctRootDigest, Account("Bob", 108)) shouldBe true
     proof.isValid(wrongDigest, Account("Bob", 108)) shouldBe false
 
+  }
+  
+  it should "read a proof from file and check it against the root digest for user Bob" in {
+    val users = parse(passingTestMock).extract[Seq[Account]]
+    val bobProof = read[Proof.ProofOfLiability](resourceAsString("/bob_proof.json"))
+    
+    val rootDigest = Tree(users).rootDigest
+    
+    bobProof.isValid(rootDigest, Account("Bob", 108)) shouldBe true
+    bobProof.isValid(rootDigest, Account("Bobby", 108)) shouldBe false
+    bobProof.isValid(rootDigest, Account("Bob", 107)) shouldBe false
+    //write(proof) shouldBe "HUH?"
+    
   }
 
   it should "be a balanced tree" in {
