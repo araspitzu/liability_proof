@@ -133,7 +133,7 @@ class ProofSpec extends FlatSpec with Matchers {
     checkTreeMetrics(Tree(seventeen), seventeen)
 
     //with a lot of users
-    val manyUsers = randomAccounts.take(8712).toList
+    val manyUsers = randomAccounts.take(4712).toList
     checkTreeMetrics(Tree(manyUsers), manyUsers)
 
   }

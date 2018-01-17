@@ -78,8 +78,6 @@ object MerkleTree {
   case class Node(
       // Hash of the concatenation of child hashes + total balance
       id: String,
-      // The combined value of the subtrees, or account value if this node is a leaf
-      totalValue: Double,
       // The value of the subtree on the left
       leftValue: Double = 0,
       // The value of the subtree on the right
@@ -94,6 +92,8 @@ object MerkleTree {
       right: Option[Node] = None
   ) {
 
+    def totalValue = leftValue + rightValue
+    
     def isLeaf = left.isEmpty && right.isEmpty
 
     override def toString: String = {
@@ -129,7 +129,7 @@ object MerkleTree {
     //Leaf
     case singleton :: Nil => Node(
       id = Node.mkLeafId(singleton),
-      totalValue = singleton.balance
+      leftValue = singleton.balance
     )
     //Node
     case moreThanOne =>
@@ -137,7 +137,6 @@ object MerkleTree {
       val rightChild = mkTree(accounts.drop(accounts.length / 2))
       Node(
         id = Node.mkId(leftChild, rightChild),
-        totalValue = leftChild.totalValue + rightChild.totalValue,
         leftValue = leftChild.totalValue,
         rightValue = rightChild.totalValue,
         leftHash = Some(leftChild.id),
