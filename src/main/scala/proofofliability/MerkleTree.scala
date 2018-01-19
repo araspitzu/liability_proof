@@ -109,13 +109,12 @@ object MerkleTree {
 
     def mkId(left: Node, right: Node): String =
       mkIdHash(left.id, right.id, left.totalValue + right.totalValue)
-
-    //TODO add random nonce
+    
     def mkIdHash(leftHash: String, rightHash: String, totalValue: Double): String =
       sha256(s"$leftHash | $rightHash | $totalValue")
 
     def mkLeafId(account: Account): String =
-      sha256(s"${account.user} | ${account.balance}")
+      sha256(s"${account.user} | ${account.balance} | ${account.nonce}")
 
   }
 
