@@ -1,70 +1,87 @@
 [
   {
     "user": "olalonde",
-    "balance": 4045
+    "balance": 4045,
+    "nonce": "bear"
   },
   {
     "user": "gmaxwell",
-    "balance": 6905
+    "balance": 6905,
+    "nonce": "elephant"
   },
   {
     "user": "satoshi",
-    "balance": 10000
+    "balance": 10000,
+    "nonce": "dog"
   },
   {
     "user": "luke-jr",
-    "balance": 300
+    "balance": 300,
+    "nonce": "cat"
   },
   {
     "user": "sipa",
-    "balance": 3027
+    "balance": 3027,
+    "nonce": "turtle"
   },
   {
     "user": "codeshark",
-    "balance": 200
+    "balance": 200,
+    "nonce": "rhino"
   },
   {
     "user": "gribble",
-    "balance": 15
+    "balance": 15,
+    "nonce": "cheetah"
   },
   {
     "user": "alice",
-    "balance": 0
+    "balance": 0,
+    "nonce": "duck"
   },
   {
     "user": "bob",
-    "balance": 12
+    "balance": 12,
+    "nonce": "hummingbird"
   },
   {
     "user": "charlie",
-    "balance": 9427
+    "balance": 9427,
+    "nonce": "eel"
   },
   {
     "user": "mark",
-    "balance": 462
+    "balance": 462,
+    "nonce": "falcon"
   },
   {
     "user": "anax",
-    "balance": 12
+    "balance": 12,
+    "nonce": "pigeon"
   },
   {
     "user": "gavin",
-    "balance": 3020
+    "balance": 3020,
+    "nonce": "mouse"
   },
   {
     "user": "stacy",
-    "balance": 68
+    "balance": 68,
+    "nonce": "swordfish"
   },
   {
     "user": "justin",
-    "balance": 3
+    "balance": 3,
+    "nonce": "lobster"
   },
   {
     "user": "einstein",
-    "balance": 39
+    "balance": 39,
+    "nonce": "crab"
   },
   {
     "user": "picasso",
-    "balance": 83
+    "balance": 83,
+    "nonce": "snake"
   }
 ]

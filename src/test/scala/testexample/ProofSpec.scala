@@ -22,7 +22,8 @@ class ProofSpec extends FlatSpec with Matchers {
 
   lazy val randomAccounts: Stream[Account] = Account(
     user = Random.alphanumeric.take(6).mkString,
-    balance = Random.nextInt
+    balance = Random.nextInt,
+    nonce = Random.alphanumeric.take(4).mkString
   ) #:: randomAccounts
 
   /**
@@ -55,8 +56,8 @@ class ProofSpec extends FlatSpec with Matchers {
     tree.maxDepth shouldBe 4
     tree.totalBalance shouldBe 387
 
-    val existingAccount = Account("Alice", 38)
-    val nonExistingAccount = Account("Mallory", 31)
+    val existingAccount = Account("Alice", 38, "turtle")
+    val nonExistingAccount = Account("Mallory", 31, "cat")
     val Some(proof) = tree.findProofByAccount(existingAccount)
 
     tree.findProofByAccount(nonExistingAccount) shouldBe None
@@ -72,7 +73,7 @@ class ProofSpec extends FlatSpec with Matchers {
     val tree = Tree(users)
     val rootDigest = tree.rootDigest
 
-    val accountToCheck = Account("mark", 462)
+    val accountToCheck = Account("mark", 462, "cheetah")
     val Some(proof) = tree.findProofByAccount(accountToCheck)
 
     tree.numNodes shouldBe expectedNumNodes
@@ -81,27 +82,27 @@ class ProofSpec extends FlatSpec with Matchers {
     proof.isValid(rootDigest, accountToCheck) shouldBe true
 
     //Also the validation should fail if the account name  or balance is incorrect
-    proof.isValid(rootDigest, Account("mark", 666)) shouldBe false
-    proof.isValid(rootDigest, Account("markzz", 462)) shouldBe false
+    proof.isValid(rootDigest, Account("mark", 666, "cheetah")) shouldBe false
+    proof.isValid(rootDigest, Account("markzz", 462, "cheetah")) shouldBe false
 
   }
 
   it should "not find a proof if the tree does not contain a certain user" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
     val tree = Tree(users)
-    tree.hasProofFor(Account("nope", 12)) shouldBe false
+    tree.hasProofFor(Account("nope", 12, "cheetah")) shouldBe false
   }
 
   it should "validate a proof correctly (failing) given a wrong root digest" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
     val tree = Tree(users)
-    val Some(proof) = tree.findProofByAccount(Account("Bob", 108))
+    val Some(proof) = tree.findProofByAccount(Account("Bob", 108, "rhino"))
 
     val correctRootDigest = tree.rootDigest
     val wrongDigest = sha256("Yo")
 
-    proof.isValid(correctRootDigest, Account("Bob", 108)) shouldBe true
-    proof.isValid(wrongDigest, Account("Bob", 108)) shouldBe false
+    proof.isValid(correctRootDigest, Account("Bob", 108, "rhino")) shouldBe true
+    proof.isValid(wrongDigest, Account("Bob", 108, "rhino")) shouldBe false
 
   }
   
@@ -111,9 +112,9 @@ class ProofSpec extends FlatSpec with Matchers {
     
     val rootDigest = Tree(users).rootDigest
     
-    bobProof.isValid(rootDigest, Account("Bob", 108)) shouldBe true
-    bobProof.isValid(rootDigest, Account("Bobby", 108)) shouldBe false
-    bobProof.isValid(rootDigest, Account("Bob", 107)) shouldBe false
+    bobProof.isValid(rootDigest, Account("Bob", 108, "rhino")) shouldBe true
+    bobProof.isValid(rootDigest, Account("Bobby", 108, "rhino")) shouldBe false
+    bobProof.isValid(rootDigest, Account("Bob", 107, "rhino")) shouldBe false
     //write(proof) shouldBe "HUH?"
     
   }

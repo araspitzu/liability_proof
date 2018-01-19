@@ -8,7 +8,8 @@ object MerkleTree {
 
   case class Account(
       user: String,
-      balance: Double
+      balance: Double,
+      nonce: String
   ) extends Ordered[Account] {
     //lexicographical ordering
     def compare(that: Account): Int = this.user.compareTo(that.user)
