@@ -56,7 +56,7 @@ class ProofSpec extends FlatSpec with Matchers {
     tree.maxDepth shouldBe 4
     tree.totalBalance shouldBe 387
 
-    val existingAccount = Account("Alice", 38, "turtle")
+    val existingAccount = Account("Alice", 38, "rhino")
     val nonExistingAccount = Account("Mallory", 31, "cat")
     val Some(proof) = tree.findProofByAccount(existingAccount)
 
@@ -73,7 +73,7 @@ class ProofSpec extends FlatSpec with Matchers {
     val tree = Tree(users)
     val rootDigest = tree.rootDigest
 
-    val accountToCheck = Account("mark", 462, "cheetah")
+    val accountToCheck = Account("mark", 462, "falcon")
     val Some(proof) = tree.findProofByAccount(accountToCheck)
 
     tree.numNodes shouldBe expectedNumNodes
@@ -81,9 +81,10 @@ class ProofSpec extends FlatSpec with Matchers {
 
     proof.isValid(rootDigest, accountToCheck) shouldBe true
 
-    //Also the validation should fail if the account name  or balance is incorrect
+    //Also the validation should fail if the account name, nonce  or balance is incorrect
+    proof.isValid(rootDigest, Account("mark", 666, "falcon")) shouldBe false
     proof.isValid(rootDigest, Account("mark", 666, "cheetah")) shouldBe false
-    proof.isValid(rootDigest, Account("markzz", 462, "cheetah")) shouldBe false
+    proof.isValid(rootDigest, Account("markzz", 462, "falcon")) shouldBe false
 
   }
 
@@ -96,26 +97,33 @@ class ProofSpec extends FlatSpec with Matchers {
   it should "validate a proof correctly (failing) given a wrong root digest" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
     val tree = Tree(users)
-    val Some(proof) = tree.findProofByAccount(Account("Bob", 108, "rhino"))
+    val Some(proof) = tree.findProofByAccount(Account("Bob", 108, "raccoon"))
 
     val correctRootDigest = tree.rootDigest
     val wrongDigest = sha256("Yo")
 
-    proof.isValid(correctRootDigest, Account("Bob", 108, "rhino")) shouldBe true
-    proof.isValid(wrongDigest, Account("Bob", 108, "rhino")) shouldBe false
+    proof.isValid(correctRootDigest, Account("Bob", 108, "raccoon")) shouldBe true
+    proof.isValid(wrongDigest, Account("Bob", 108, "raccoon")) shouldBe false
 
   }
   
   it should "read a proof from file and check it against the root digest for user Bob" in {
     val users = parse(passingTestMock).extract[Seq[Account]]
+    
+    
+    
     val bobProof = read[Proof.ProofOfLiability](resourceAsString("/bob_proof.json"))
     
+    
+    
     val rootDigest = Tree(users).rootDigest
+  
+    write(Tree(users).findProofByAccount(Account("Bob", 108, "raccoon"))) shouldBe "H"
+    
     
     bobProof.isValid(rootDigest, Account("Bob", 108, "rhino")) shouldBe true
     bobProof.isValid(rootDigest, Account("Bobby", 108, "rhino")) shouldBe false
     bobProof.isValid(rootDigest, Account("Bob", 107, "rhino")) shouldBe false
-    //write(proof) shouldBe "HUH?"
     
   }
 
