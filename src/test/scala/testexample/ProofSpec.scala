@@ -108,11 +108,10 @@ class ProofSpec extends FlatSpec with Matchers {
   }
   
   it should "read a proof from file and check it against the root digest for user Bob" in {
-    val users = parse(passingTestMock).extract[Seq[Account]]
-    
+
+    //digest from mock_data.json
+    val rootDigest = "f61070df851b2fa44eb9f0bc63b69147229796068dd55676265f147d71b25ced"
     val bobProof = read[Proof.ProofOfLiability](resourceAsString("/bob_proof.json"))
-    val rootDigest = Tree(users).rootDigest
-    
     
     bobProof.isValid(rootDigest, Account("Bob", 108, "raccoon")) shouldBe true
     bobProof.isValid(rootDigest, Account("Bob", 108, "rhino")) shouldBe false
