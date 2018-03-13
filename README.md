@@ -1,13 +1,22 @@
-# Proof of Liabilities
+# Mining pool signalling
 
-*Proof of Liabilities* Scala implementation.
+## Overview
+This tool aims at helping the mining pools to prove their fairiness toward the users of the pool. 
+The implementation details can be found in *allegato1* . 
 
-Proof of Liabilities (PoL) is a scheme designed to let companies that accept
-monetary deposits from consumers (e.g. Bitcoin exchanges, gambling websites,
-online Bitcoin wallets, etc.) prove their total amount of deposits (their liabilities)
-without compromising the privacy of individual users.
+## Documentation
 
-To read more about the idea:
- - https://iwilcox.me.uk/2014/proving-bitcoin-reserves
+Extensive (API-level) documentation will be provide via swagger and/or wiki associated with this repo.
 
-Work in progress
+## Development
+
+The applications is written in Scala and requires JDK8, docker and sbt
+
+
+## Installation
+
+TODO
+
+## Gotchas
+
+TODO
