@@ -19,17 +19,17 @@ RUN mkdir -p /usr/share/sbt \
 WORKDIR /usr/src
 RUN sbt compile && sbt test
 COPY . .
-#create self-packaged executable
-RUN sbt stage
+RUN sbt universal:packageZipTarball
 
 #Launcher
 FROM openjdk:8u121-jdk-alpine
-RUN apk add --no-cache bash
+RUN apk add --no-cache tar bash
 
 WORKDIR /app
-COPY --from=BUILD /usr/src/target/universal/stage/bin/liability_proof .
+COPY --from=BUILD /usr/src/target/universal/liability_proof-0.0.1.tgz .
+RUN tar -xzf liability_proof-0.0.1.tgz
 
 # passes the host system java options to this image entrypoint
 ENV JAVA_OPTS=
 
-ENTRYPOINT ./liability_proof -main proofofliability.AppEntryPoint
+ENTRYPOINT ./liability_proof-0.0.1/bin/liability_proof
