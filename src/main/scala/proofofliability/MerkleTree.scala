@@ -7,9 +7,9 @@ import scala.math._
 object MerkleTree {
 
   case class Account(
-      user: String,
-      balance: Double,
-      nonce: String
+    user: String,
+    balance: Double,
+    nonce: String
   ) extends Ordered[Account] {
     //lexicographical ordering
     def compare(that: Account): Int = this.user.compareTo(that.user)
@@ -17,7 +17,7 @@ object MerkleTree {
   }
 
   case class Tree(
-      private[proofofliability] val root: Node
+    private[proofofliability] val root: Node
   ) {
 
     def rootDigest = root.id
@@ -77,24 +77,24 @@ object MerkleTree {
   }
 
   case class Node(
-      // Hash of the concatenation of child hashes + total balance
-      id: String,
-      // The value of the subtree on the left
-      leftValue: Double = 0,
-      // The value of the subtree on the right
-      rightValue: Double = 0,
-      // Hash pointer to left child ID's
-      leftHash: Option[String] = None,
-      // Hash pointer to left child ID's
-      rightHash: Option[String] = None,
-      // left child
-      left: Option[Node] = None,
-      // right child
-      right: Option[Node] = None
+    // Hash of the concatenation of child hashes + total balance
+    id: String,
+    // The value of the subtree on the left
+    leftValue: Double = 0,
+    // The value of the subtree on the right
+    rightValue: Double = 0,
+    // Hash pointer to left child ID's
+    leftHash: Option[String] = None,
+    // Hash pointer to left child ID's
+    rightHash: Option[String] = None,
+    // left child
+    left: Option[Node] = None,
+    // right child
+    right: Option[Node] = None
   ) {
 
     def totalValue = leftValue + rightValue
-    
+
     def isLeaf = left.isEmpty && right.isEmpty
 
     override def toString: String = {
@@ -109,7 +109,7 @@ object MerkleTree {
 
     def mkId(left: Node, right: Node): String =
       mkIdHash(left.id, right.id, left.totalValue + right.totalValue)
-    
+
     def mkIdHash(leftHash: String, rightHash: String, totalValue: Double): String =
       sha256(s"$leftHash | $rightHash | $totalValue")
 

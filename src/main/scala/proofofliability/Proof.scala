@@ -5,7 +5,7 @@ import proofofliability.MerkleTree._
 object Proof {
 
   case class ProofOfLiability(
-      path: Tree
+    path: Tree
   ) {
     def isValid(rootDigest: String, account: Account): Boolean = {
       rootDigest == path.rootDigest && checkSubtreeProof(path.root, account)

@@ -18,6 +18,8 @@ lazy val root = (project in file(".")).
     )
   )
 
+enablePlugins(JavaAppPackaging)
+
 lazy val scalariformPref = Def.setting {
   ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
