@@ -17,6 +17,7 @@ object MerkleTree {
   }
 
   case class Tree(
+    private[proofofliability] val accounts: Seq[Account],
     private[proofofliability] val root: Node
   ) {
 
@@ -27,7 +28,7 @@ object MerkleTree {
     def hasProofFor(account: Account): Boolean = findProofByAccount(account).isDefined
 
     def findProofByAccount(account: Account): Option[ProofOfLiability] = {
-      mkProofPath(root, account).map(node => ProofOfLiability(Tree(node)))
+      mkProofPath(root, account).map(node => ProofOfLiability(Tree(Seq(account), node)))
     }
 
     private def mkProofPath(node: Node, account: Account): Option[Node] = {
@@ -69,11 +70,15 @@ object MerkleTree {
       case Some(node) if !node.isLeaf => math.max(maxDepthNode(node.left), maxDepthNode(node.right)) + 1
     }
 
+    def addAccount(account: Account): Tree = {
+      Tree(accounts :+ account)
+    }
+
   }
 
   object Tree {
     //TODO scramble account ordering?
-    def apply(accounts: Seq[Account]): Tree = Tree(mkTree(accounts.sorted))
+    def apply(accounts: Seq[Account]): Tree = Tree(accounts, mkTree(accounts.sorted))
   }
 
   case class Node(

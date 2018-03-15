@@ -120,6 +120,26 @@ class ProofSpec extends FlatSpec with Matchers {
     
   }
 
+  it should "add an account and recompute the tree accordingly" in {
+
+    val users = parse(passingTestMock).extract[Seq[Account]]
+    val tree = Tree(users)
+
+    val accountToAdd = Account("Diana", 223, "panther")
+
+    tree.hasProofFor(accountToAdd) shouldBe false
+
+    val updatedTree = tree.addAccount(accountToAdd)
+    updatedTree.rootDigest != tree.rootDigest shouldBe true
+    updatedTree.numNodes shouldBe tree.numNodes +- 2 //2 because if the tree is complete we go one level deeper and add 2 nodes
+    updatedTree.totalBalance shouldBe tree.totalBalance + accountToAdd.balance
+    updatedTree.hasProofFor(accountToAdd) shouldBe true
+
+    val Some(proof) = updatedTree.findProofByAccount(accountToAdd)
+    proof.isValid(updatedTree.rootDigest, accountToAdd) shouldBe true
+
+  }
+
   it should "be a balanced tree" in {
 
     //with power of two
